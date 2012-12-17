@@ -18,14 +18,52 @@ class SiteMapperAcceptanceTests(unittest.TestCase):
         Run a test server by going example/ and running:
             python -m SimpleHTTPServer
         """
-        result = mapper_cli.main(['http://localhost:8000'])
+        result = mapper_cli.main('http://localhost:8000')
+        home_page = result['/']
+        team_page = result['/company/team.html']
+        products_page = result['/products.html']
+
         self.assertEqual(
-            result,
+            home_page,
             {
-                '/',
-                '/company/about.html',
-                '/company/team.html',
-                '/products.html',
+                'pages': {
+                    '/',
+                    '/company/team.html',
+                    '/products.html',
+                },
+                'assets': {
+                    'http://cdn.com/lib.js',
+                    'http://localhost:8000/app.js',
+                    'http://localhost:8000/app.css',
+                }
+            }
+        )
+
+        self.assertEqual(
+            team_page,
+            {
+                'pages': {
+                    '/',
+                    '/products.html',
+                },
+                'assets': {
+                    'http://cdn.com/lib.js',
+                    'https://cdn.com/img.jpg',
+                }
+            }
+        )
+
+        self.assertEqual(
+            products_page,
+            {
+                'pages': {
+                    '/',
+                    '/company/team.html',
+                },
+                'assets': {
+                    'http://cdn.com/lib.js',
+                    'http://localhost:8000/app.js',
+                }
             }
         )
 
@@ -50,6 +88,19 @@ class SiteMapperCliTests(unittest.TestCase):
         )
         self.assertEqual(result, '/hello')
 
+
+    def test_format_links_data_prints_links_in_sorted_order(self):
+        output = mapper_cli.format_links_data(
+            '/page', 'pages', ['/hello', '/bye'])
+        self.assertEqual(
+            output,
+            [
+                "Page '/page' has links to these pages:",
+                "\t/bye",
+                "\t/hello",
+                "",
+            ]
+        )
 
 
 class SiteMapperPageParsingTests(unittest.TestCase):
@@ -84,15 +135,16 @@ class SiteMapperPageParsingTests(unittest.TestCase):
         """
 
 
-    def test_get_internal_links_on_page_returns(self):
-        links = mapper_cli.get_internal_links_on_page(
+    def test_filter_links_on_page(self):
+        # TODO break this test into smaller ones for each behaviour
+        links = mapper_cli.filter_links_on_page(
             self.page_content, 'http://example.com'
         )
 
         self.assertEqual(
             links,
             {
-                'links': {'/about', '/terms', '/logout'},
+                'pages': {'/about', '/terms', '/logout'},
                 'assets': {
                     'http://example.com/app.js',
                     'http://cdn.com/lib.js',

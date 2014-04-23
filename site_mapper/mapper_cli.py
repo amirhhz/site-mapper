@@ -29,7 +29,7 @@ def filter_links_on_page(page_content, root_url):
             if internal_path:
                 result['pages'].add(internal_path)
         elif element.tag in ['script', 'link', 'img']:
-                result['assets'].add(link)
+            result['assets'].add(link)
 
     return result
 
